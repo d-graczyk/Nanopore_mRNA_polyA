@@ -1,31 +1,36 @@
 #!/usr/bin/env python
+
 import datetime
+import glob
+import math
+import os
+import sys
 from concurrent.futures import ProcessPoolExecutor
-from scipy import signal
-import pandas as pd
-from scipy import stats
-import numpy.testing as npt
-import numpy as np
 from itertools import repeat
+
+import click
 import matplotlib.cm as cm
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
-import click
-import glob
+import numpy as np
+import numpy.testing as npt
+import pandas as pd
 from matplotlib import rcParams
-import os
-import sys
-import math
+from scipy import signal, stats
 
-from dtaidistance.subsequence.dtw import subsequence_alignment
-from dtaidistance import dtw_visualisation as dtwvis
 from dtaidistance import dtw
-
+from dtaidistance import dtw_visualisation as dtwvis
+from dtaidistance.subsequence.dtw import subsequence_alignment
 from ont_fast5_api.fast5_interface import get_fast5_file
+
 os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
 
-# major function for finding subsequence matches in raw nanopore signals
+
 def find_sim(ref, fast5_path, verbose=True, cutoff=20000):
+    """
+    The major function for finding subsequence matches in raw nanopore signals.
+    """
+
     # create results data.frame (pandas)
     results = pd.DataFrame(
         columns=['read_id', 'distance', 'startidx', 'endidx'])
@@ -34,44 +39,65 @@ def find_sim(ref, fast5_path, verbose=True, cutoff=20000):
 
         now = datetime.datetime.now()
         print("##### processing file: " + fast5_path + "  " + str(now))
-        i = 0
-        for read in f5.get_reads():  # iterate thorugh reads
+
+        for num, read in enumerate(f5.get_reads(), start=1):
             raw_data = read.get_raw_data(scale=True)
-            raw_data = np.array(raw_data[1:cutoff]).astype(
-                float)  # get only first  {cutoff} signals
-            raw_data = signal.savgol_filter(
-                raw_data, 51, 3)  # apply savitzky golay fiter
-            raw_data = stats.zscore(raw_data)  # zscore normalize signals
-            read_id = read.read_id  # get read_id
+
+            # get only first  {cutoff} signals
+            raw_data = np.array(
+                raw_data[1:cutoff]).astype(float)
+
+            # apply savitzky golay fiter
+            raw_data = signal.savgol_filter(raw_data, 51, 3)
+
+            # zscore normalize signals
+            raw_data = stats.zscore(raw_data)
+
+            # get read_id
+            read_id = read.read_id
+
             # perform alignment using sequence_alignment from dtaidistance:
             # use_C - use C capabilities (faster) if compiled and available
             seq_align = subsequence_alignment(ref, raw_data, use_c=True)
-            match = seq_align.best_match()  # get best match from alignment
-            startidx, endidx = match.segment  # get start and end of alignment
-            i = i+1
-            if (endidx > startidx+10):  # if start and end are not close to each other
+
+            # get best match from alignment
+            match = seq_align.best_match()
+
+            # get start and end of alignment
+            startidx, endidx = match.segment
+
+            # if start and end are not close to each other
+            if (endidx > startidx+10):
                 # calculate distance using fast option
                 distance = dtw.distance_fast(ref, raw_data[startidx:endidx])
                 if (verbose):
-                    print(str(i) + ": " + read_id + "dist: " +
+                    print(str(num) + ": " + read_id + "dist: " +
                           str(distance) + "      " + str(os.getpid()))
             else:
                 distance = 1000
+
             # add results to pandas data.frame
+            # TODO: This has to be refactored to use dict.
             temp_results = pd.DataFrame([(read_id, distance, startidx, endidx)], columns=[
                                         'read_id', 'distance', 'startidx', 'endidx'])
+
             results = pd.concat([results, temp_results])
             # print(raw_data_temp)
+
     # output results of a given chnk to file in /tmp
     temp_output = '/tmp/' + \
         os.path.basename(fast5_path) + '_' + str(os.getpid()) + '_DTW.tsv'
     results.to_csv(temp_output, sep="\t")
+
     fin_now = datetime.datetime.now()
-    print("***** finished file: " + fast5_path + "  " +
-          str(fin_now) + " (started: " + str(now) + ")")
+
+    print(
+        "***** finished file: " + fast5_path + "  " +
+        str(fin_now) + " (started: " + str(now) + ")"
+    )
+
     return results
 
-# get parameters with click:
 
 @click.command()
 @click.option('--inpath', '-i', help='The input fast5 directory path')
@@ -80,31 +106,38 @@ def find_sim(ref, fast5_path, verbose=True, cutoff=20000):
 @click.option('--output', '-o', help='output file')
 @click.option('--threads', '-t', default=1, help='parallel threads to use')
 @click.option('--verbose', '-v', is_flag=True, default=False, help='Be verbose?')
-
-def main(inpath,ref_signal,output,shift_signal,threads,verbose):
+def main(inpath, ref_signal, output, shift_signal, threads, verbose):
 
     # load reference signal
-    ref_sig = np.loadtxt(ref_signal,dtype="float")
-    ref_sig = ref_sig[1+shift_signal:5000+shift_signal].astype(float) # get only first 5000 signal points
-    ref_sig = signal.savgol_filter(ref_sig,51,3) # apply savitzky golay fiter
-    ref_sig = stats.zscore(ref_sig) #zscore normalize signals
+    ref_sig = np.loadtxt(ref_signal, dtype="float")
+    # get only first 5000 signal points
+    ref_sig = ref_sig[1+shift_signal:5000+shift_signal].astype(float)
+    # apply savitzky golay fiter
+    ref_sig = signal.savgol_filter(ref_sig, 51, 3)
+    ref_sig = stats.zscore(ref_sig)  # zscore normalize signals
     print("Succesfully read reference signal")
-    if(shift_signal>0):
-        print("Reference signal was shifted by " + str(shift_signal) + " data points")
-    fin_results = pd.DataFrame(columns=['read_id','distance','startidx','endidx']) # create pandas data.rame for results
+    if (shift_signal > 0):
+        print("Reference signal was shifted by " +
+              str(shift_signal) + " data points")
+    # create pandas data.rame for results
+    fin_results = pd.DataFrame(
+        columns=['read_id', 'distance', 'startidx', 'endidx'])
 
     futures = []  # initialize futures
 
     # get fast5 files from input path
-    files = []
-    for fileNM in glob.glob(inpath + '/**/*.fast5', recursive=True):
-        # print(fileNM)
-        files.append(fileNM)
+    files = list(glob.glob(inpath + '/**/*.fast5', recursive=True))
+    # files = []
+    # for fileNM in glob.glob(inpath + '/**/*.fast5', recursive=True):
+    #     # print(fileNM)
+    #     files.append(fileNM)
 
-        # start processes pool (futures)
+    # start processes pool (futures)
     with ProcessPoolExecutor(max_workers=threads) as pool:
-        results = list(pool.map(find_sim, repeat(
-            ref_sig), files, repeat(verbose)))
+        results = list(
+            pool.map(find_sim, repeat(ref_sig),
+                     files, repeat(verbose))
+        )
 
     # produce and save final results
     fin_results = pd.concat(results)
@@ -112,4 +145,8 @@ def main(inpath,ref_signal,output,shift_signal,threads,verbose):
 
 
 if __name__ == '__main__':
-    main()
+    if len(sys.argv) == 1:
+        print("ERROR. You have to provide argumnts.\n")
+        main.main(['--help'])
+    else:
+        main()

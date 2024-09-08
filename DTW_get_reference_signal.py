@@ -1,23 +1,26 @@
 #!/usr/bin/env python
-import pandas as pd
-from ont_fast5_api.fast5_interface import get_fast5_file
-import numpy as np
-import click
 import glob
 import os
 import sys
 import traceback
 
-sys.path.append(
-    '/usr/local/software/libraries/python/diaidistance/2.3.6/lib/python3.8/site-packages/')
+import click
+import numpy as np
+import pandas as pd
 
-sys.path.append(
-    '/usr/local/software/ont-fast5-api/4.0.0/lib/python3.8/site-packages/')
+from ont_fast5_api.fast5_interface import get_fast5_file
+
+# sys.path.append(
+#     '/usr/local/software/libraries/python/diaidistance/2.3.6/lib/python3.8/site-packages/')
+
+# sys.path.append(
+#     '/usr/local/software/ont-fast5-api/4.0.0/lib/python3.8/site-packages/')
+
 os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
 
 
-sys.path.append(
-    '/usr/local/software/libraries/python/pandas/1.4.0/lib/python3.8/site-packages/')
+# sys.path.append(
+#     '/usr/local/software/libraries/python/pandas/1.4.0/lib/python3.8/site-packages/')
 
 
 @click.command()
