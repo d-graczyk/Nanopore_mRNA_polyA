@@ -1,0 +1,7 @@
+numpy
+click
+ont_fast5_api
+dtaidistance
+matplotlib
+scipy
+pandas
