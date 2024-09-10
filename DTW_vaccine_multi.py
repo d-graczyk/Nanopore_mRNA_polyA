@@ -132,11 +132,11 @@ def main(inpath, ref_signal, output, shift_signal, threads, verbose):
     futures = []  # initialize futures
 
     # get fast5 files from input path
-    files = list(glob.glob(inpath + '/**/*.fast5', recursive=True))
-    # files = []
-    # for fileNM in glob.glob(inpath + '/**/*.fast5', recursive=True):
-    #     # print(fileNM)
-    #     files.append(fileNM)
+    # files = list(glob.glob(inpath + '/**/*.fast5', recursive=True))
+    files = []
+    for fileNM in glob.glob(inpath + '/**/*.fast5', recursive=True):
+        print(fileNM)
+        files.append(fileNM)
 
     # start processes pool (futures)
     # with ProcessPoolExecutor(max_workers=threads) as pool:
