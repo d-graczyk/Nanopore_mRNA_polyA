@@ -146,7 +146,7 @@ def main(inpath, ref_signal, output, shift_signal, threads, verbose):
 
 if __name__ == '__main__':
     if len(sys.argv) == 1:
-        print("ERROR. You have to provide argumnts.\n")
+        print("ERROR. You have to provide arguments.\n")
         main.main(['--help'])
     else:
         main()
