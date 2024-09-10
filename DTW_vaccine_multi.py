@@ -31,10 +31,6 @@ def find_sim(ref, fast5_path, verbose=True, cutoff=20000):
     The major function for finding subsequence matches in raw nanopore signals.
     """
 
-    # create results data.frame (pandas)
-    results = pd.DataFrame(
-        columns=['read_id', 'distance', 'startidx', 'endidx'])
-
     with get_fast5_file(fast5_path, mode="r") as f5:  # open fast5
 
         now = datetime.datetime.now()
@@ -44,9 +40,11 @@ def find_sim(ref, fast5_path, verbose=True, cutoff=20000):
         for num, read in enumerate(f5.get_reads(), start=1):
             raw_data = read.get_raw_data(scale=True)
 
+            raw_data = np.array(raw_data).astype(float)
+
             # get only first  {cutoff} signals
-            raw_data = np.array(
-                raw_data[1:cutoff]).astype(float)
+            if len(raw_data) > cutoff:
+                raw_data = raw_data[1:cutoff]
 
             # apply savitzky golay fiter
             raw_data = signal.savgol_filter(raw_data, 51, 3)
@@ -89,7 +87,7 @@ def find_sim(ref, fast5_path, verbose=True, cutoff=20000):
 
     results = pd.DataFrame.from_dict(
         temp_data, orient="index",
-        columns=['read_id', 'distance', 'startidx', 'endidx']
+        # columns=['read_id', 'distance', 'startidx', 'endidx']
     )
 
     # # output results of a given chnk to file in /tmp
