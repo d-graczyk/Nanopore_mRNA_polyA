@@ -146,7 +146,7 @@ def main(inpath, ref_signal, output, shift_signal, threads, verbose):
     #                  files, repeat(verbose))
     #     )
 
-    results = find_sim(files[0], ref_sig, verbose)
+    results = find_sim(ref_sig, files[0], verbose)
     # produce and save final results
     # fin_results = pd.concat(results)
     fin_results.to_csv(output, sep="\t")
