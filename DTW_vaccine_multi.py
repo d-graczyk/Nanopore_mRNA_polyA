@@ -40,6 +40,7 @@ def find_sim(ref, fast5_path, verbose=True, cutoff=20000):
         now = datetime.datetime.now()
         print("##### processing file: " + fast5_path + "  " + str(now))
 
+        temp_data = {}
         for num, read in enumerate(f5.get_reads(), start=1):
             raw_data = read.get_raw_data(scale=True)
 
@@ -78,16 +79,23 @@ def find_sim(ref, fast5_path, verbose=True, cutoff=20000):
 
             # add results to pandas data.frame
             # TODO: This has to be refactored to use dict.
-            temp_results = pd.DataFrame([(read_id, distance, startidx, endidx)], columns=[
-                                        'read_id', 'distance', 'startidx', 'endidx'])
 
-            results = pd.concat([results, temp_results])
-            # print(raw_data_temp)
+            temp_data[num] = {
+                'read_id': read_id,
+                'distance': distance,
+                'startidx': startidx,
+                'endidx': endidx
+            }
 
-    # output results of a given chnk to file in /tmp
-    temp_output = '/tmp/' + \
-        os.path.basename(fast5_path) + '_' + str(os.getpid()) + '_DTW.tsv'
-    results.to_csv(temp_output, sep="\t")
+    results = pd.DataFrame.from_dict(
+        temp_data, orient="index",
+        columns=['read_id', 'distance', 'startidx', 'endidx']
+    )
+
+    # # output results of a given chnk to file in /tmp
+    # temp_output = '/tmp/' + \
+    #     os.path.basename(fast5_path) + '_' + str(os.getpid()) + '_DTW.tsv'
+    # results.to_csv(temp_output, sep="\t")
 
     fin_now = datetime.datetime.now()
 
@@ -99,13 +107,13 @@ def find_sim(ref, fast5_path, verbose=True, cutoff=20000):
     return results
 
 
-@click.command()
-@click.option('--inpath', '-i', help='The input fast5 directory path')
-@click.option('--ref_signal', '-r', help='reference signal')
-@click.option('--shift_signal', '-s', default=0, help='shift reference signal by number of points')
-@click.option('--output', '-o', help='output file')
-@click.option('--threads', '-t', default=1, help='parallel threads to use')
-@click.option('--verbose', '-v', is_flag=True, default=False, help='Be verbose?')
+@ click.command()
+@ click.option('--inpath', '-i', help='The input fast5 directory path')
+@ click.option('--ref_signal', '-r', help='reference signal')
+@ click.option('--shift_signal', '-s', default=0, help='shift reference signal by number of points')
+@ click.option('--output', '-o', help='output file')
+@ click.option('--threads', '-t', default=1, help='parallel threads to use')
+@ click.option('--verbose', '-v', is_flag=True, default=False, help='Be verbose?')
 def main(inpath, ref_signal, output, shift_signal, threads, verbose):
 
     # load reference signal
