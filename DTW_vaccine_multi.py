@@ -31,7 +31,7 @@ def find_sim(ref, fast5_path, verbose=True, cutoff=20000):
     The major function for finding subsequence matches in raw nanopore signals.
     """
 
-    with get_fast5_file(fast5_path, mode="r") as f5:  # open fast5
+    with get_fast5_file(fast5_path, mode="r") as f5:
 
         now = datetime.datetime.now()
         print("##### processing file: " + fast5_path + "  " + str(now))
@@ -42,7 +42,7 @@ def find_sim(ref, fast5_path, verbose=True, cutoff=20000):
 
             raw_data = np.array(raw_data).astype(float)
 
-            # get only first  {cutoff} signals
+            # get only first {cutoff} signals
             if len(raw_data) > cutoff:
                 raw_data = raw_data[1:cutoff]
 
@@ -87,13 +87,13 @@ def find_sim(ref, fast5_path, verbose=True, cutoff=20000):
 
     results = pd.DataFrame.from_dict(
         temp_data, orient="index",
-        # columns=['read_id', 'distance', 'startidx', 'endidx']
+        columns=['read_id', 'distance', 'startidx', 'endidx']
     )
 
-    # # output results of a given chnk to file in /tmp
-    # temp_output = '/tmp/' + \
-    #     os.path.basename(fast5_path) + '_' + str(os.getpid()) + '_DTW.tsv'
-    # results.to_csv(temp_output, sep="\t")
+    # output results of a given chnk to file in /tmp
+    temp_output = '/tmp/' + \
+        os.path.basename(fast5_path) + '_' + str(os.getpid()) + '_DTW.tsv'
+    results.to_csv(temp_output, sep="\t")
 
     fin_now = datetime.datetime.now()
 
@@ -126,17 +126,17 @@ def main(inpath, ref_signal, output, shift_signal, threads, verbose):
         print("Reference signal was shifted by " +
               str(shift_signal) + " data points")
     # create pandas data.rame for results
-    fin_results = pd.DataFrame(
-        columns=['read_id', 'distance', 'startidx', 'endidx'])
+    # fin_results = pd.DataFrame(
+    #     columns=['read_id', 'distance', 'startidx', 'endidx'])
 
-    futures = []  # initialize futures
+    # futures = []  # initialize futures
 
     # get fast5 files from input path
-    # files = list(glob.glob(inpath + '/**/*.fast5', recursive=True))
-    files = []
-    for fileNM in glob.glob(inpath + '/**/*.fast5', recursive=True):
-        print(fileNM)
-        files.append(fileNM)
+    files = list(glob.glob(inpath + '/**/*.fast5', recursive=True))
+    # files = []
+    # for fileNM in glob.glob(inpath + '/**/*.fast5', recursive=True):
+    #     print(fileNM)
+    #     files.append(fileNM)
 
     # start processes pool (futures)
     # with ProcessPoolExecutor(max_workers=threads) as pool:
@@ -148,7 +148,7 @@ def main(inpath, ref_signal, output, shift_signal, threads, verbose):
 
     results = find_sim(ref_sig, files[0], verbose)
     # produce and save final results
-    # fin_results = pd.concat(results)
+    fin_results = pd.concat(results)
     fin_results.to_csv(output, sep="\t")
 
 
