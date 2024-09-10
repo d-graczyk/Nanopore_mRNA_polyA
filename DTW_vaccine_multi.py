@@ -139,14 +139,16 @@ def main(inpath, ref_signal, output, shift_signal, threads, verbose):
     #     files.append(fileNM)
 
     # start processes pool (futures)
-    with ProcessPoolExecutor(max_workers=threads) as pool:
-        results = list(
-            pool.map(find_sim, repeat(ref_sig),
-                     files, repeat(verbose))
-        )
+    # with ProcessPoolExecutor(max_workers=threads) as pool:
 
+    #     results = list(
+    #         pool.map(find_sim, repeat(ref_sig),
+    #                  files, repeat(verbose))
+    #     )
+
+    results = find_sim(files[0], ref_sig, verbose)
     # produce and save final results
-    fin_results = pd.concat(results)
+    # fin_results = pd.concat(results)
     fin_results.to_csv(output, sep="\t")
 
 
