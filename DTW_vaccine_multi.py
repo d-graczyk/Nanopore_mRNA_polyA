@@ -133,20 +133,23 @@ def main(inpath, ref_signal, output, shift_signal, threads, verbose):
 
     # get fast5 files from input path
     files = list(glob.glob(inpath + '/**/*.fast5', recursive=True))
+
     # files = []
     # for fileNM in glob.glob(inpath + '/**/*.fast5', recursive=True):
     #     print(fileNM)
     #     files.append(fileNM)
 
     # start processes pool (futures)
-    # with ProcessPoolExecutor(max_workers=threads) as pool:
+    with ProcessPoolExecutor(max_workers=threads) as pool:
 
-    #     results = list(
-    #         pool.map(find_sim, repeat(ref_sig),
-    #                  files, repeat(verbose))
-    #     )
+        results = list(
+            pool.map(
+                find_sim, repeat(ref_sig),
+                files, repeat(verbose)
+            )
+        )
 
-    results = find_sim(ref_sig, files[0], verbose)
+    # results = find_sim(ref_sig, files[0], verbose)
     # produce and save final results
     fin_results = pd.concat(results)
     fin_results.to_csv(output, sep="\t")
