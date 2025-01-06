@@ -1,26 +1,12 @@
 #!/usr/bin/env python
-import glob
 import os
-import sys
-import traceback
 
 import click
 import numpy as np
 import pandas as pd
-
 from ont_fast5_api.fast5_interface import get_fast5_file
 
-# sys.path.append(
-#     '/usr/local/software/libraries/python/diaidistance/2.3.6/lib/python3.8/site-packages/')
-
-# sys.path.append(
-#     '/usr/local/software/ont-fast5-api/4.0.0/lib/python3.8/site-packages/')
-
 os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
-
-
-# sys.path.append(
-#     '/usr/local/software/libraries/python/pandas/1.4.0/lib/python3.8/site-packages/')
 
 
 @click.command()
@@ -41,8 +27,10 @@ def main(infile, read_id, nanopolish, output):
     correct_read = 1
     try:
         transcript_start = int(
-            nanopolish_output[nanopolish_output["readname"] == read.read_id]["transcript_start"].iat[0])
-    except:
+            nanopolish_output[nanopolish_output["readname"]
+                              == read.read_id]["transcript_start"].iat[0]
+        )
+    except KeyError:
         print("error")
         correct_read = 0
     if (correct_read == 1):
